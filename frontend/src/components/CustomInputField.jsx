@@ -1,5 +1,5 @@
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "motion/react";
 
 function CustomInputField({
   id,
@@ -8,6 +8,7 @@ function CustomInputField({
   type = "text",
   placeholder = "",
   register,
+  error,
 }) {
   return (
     <div className="space-y-2">
@@ -26,6 +27,19 @@ function CustomInputField({
           {...register}
         />
       </div>
+      {error && (
+        <AnimatePresence>
+          <motion.p
+            initial={{ opacity: 0, y: -10, scale: 0 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-xs text-red-500"
+          >
+            {error}
+          </motion.p>
+        </AnimatePresence>
+      )}
     </div>
   );
 }

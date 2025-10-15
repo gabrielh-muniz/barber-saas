@@ -10,7 +10,6 @@ import CustomInputField from "@/components/CustomInputField";
 import { Mail, User, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { useForm } from "react-hook-form";
 import { useSignupForm } from "@/hooks/useLogicForm";
 
 function SignupPage() {
@@ -43,6 +42,7 @@ function SignupPage() {
                 type="text"
                 placeholder="John Doe"
                 register={register("username")}
+                error={errors.username?.message}
               />
               <CustomInputField
                 id="email"
@@ -51,6 +51,7 @@ function SignupPage() {
                 type="email"
                 placeholder="john@example.com"
                 register={register("email")}
+                error={errors.email?.message}
               />
               <CustomInputField
                 id="password"
@@ -59,6 +60,7 @@ function SignupPage() {
                 type="password"
                 placeholder="Password"
                 register={register("password")}
+                error={errors.password?.message}
               />
               <Button type="submit" className="h-10 w-full">
                 Sign Up
