@@ -10,8 +10,16 @@ import CustomInputField from "@/components/CustomInputField";
 import { Mail, User, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { useSignupForm } from "@/hooks/useLogicForm";
 
 function SignupPage() {
+  const { register, handleSubmit, errors } = useSignupForm(
+    function onSubmit(data) {
+      console.log(data);
+    },
+  );
+
   return (
     <CentralizedWrapper>
       <div className="w-full max-w-sm space-y-4">
@@ -27,13 +35,14 @@ function SignupPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <CustomInputField
                 id="username"
                 icon={User}
                 labelText="Username"
                 type="text"
                 placeholder="John Doe"
+                register={register("username")}
               />
               <CustomInputField
                 id="email"
@@ -41,6 +50,7 @@ function SignupPage() {
                 labelText="Email Address"
                 type="email"
                 placeholder="john@example.com"
+                register={register("email")}
               />
               <CustomInputField
                 id="password"
@@ -48,13 +58,7 @@ function SignupPage() {
                 labelText="Password"
                 type="password"
                 placeholder="Password"
-              />
-              <CustomInputField
-                id="confirm-password"
-                icon={Lock}
-                labelText="Confirm Password"
-                type="password"
-                placeholder="Confirm Password"
+                register={register("password")}
               />
               <Button type="submit" className="h-10 w-full">
                 Sign Up

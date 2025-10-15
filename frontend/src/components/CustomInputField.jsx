@@ -7,6 +7,7 @@ function CustomInputField({
   labelText,
   type = "text",
   placeholder = "",
+  register,
 }) {
   return (
     <div className="space-y-2">
@@ -22,6 +23,7 @@ function CustomInputField({
           type={type}
           placeholder={placeholder}
           className={`h-10 w-full rounded-md border text-sm outline-none ${Icon ? "pl-10" : ""} `}
+          {...register}
         />
       </div>
     </div>
