@@ -15,6 +15,15 @@ const schemas = {
       .max(20)
       .nonempty("Password is required"),
   }),
+
+  login: z.object({
+    email: z.email("Invalid email format").nonempty("Email is required"),
+    password: z
+      .string()
+      .min(6, "Password must be at least 6 characters")
+      .max(20)
+      .nonempty("Password is required"),
+  }),
 };
 
 /**
@@ -56,4 +65,8 @@ function useSignupForm(onSubmit) {
   );
 }
 
-export { useSignupForm };
+function useLoginForm(onSubmit) {
+  return useLogicForm(schemas.login, { email: "", password: "" }, onSubmit);
+}
+
+export { useSignupForm, useLoginForm };
