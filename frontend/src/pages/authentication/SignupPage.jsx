@@ -6,18 +6,26 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
 import CustomInputField from "@/components/CustomInputField";
 import { Mail, User, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSignupForm } from "@/hooks/useLogicForm";
+import useAuthStore from "@/store/auth.js";
+import { AnimatePresence, motion } from "motion/react";
 
 function SignupPage() {
-  const { register, handleSubmit, errors } = useSignupForm(
-    function onSubmit(data) {
-      console.log(data);
-    },
-  );
+  const navigate = useNavigate();
+
+  const { signUp, isLoading, error } = useAuthStore();
+
+  const { register, handleSubmit, errors } = useSignupForm(async (data) => {
+    const [err, user] = await signUp(data.email, data.password, data.username);
+    if (!err && user) {
+      navigate("/dashboard");
+    }
+  });
 
   return (
     <CentralizedWrapper>
@@ -35,6 +43,19 @@ function SignupPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <form className="space-y-4" onSubmit={handleSubmit}>
+              {error && (
+                <AnimatePresence>
+                  <motion.p
+                    initial={{ opacity: 0, y: -10, scale: 0 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-xs text-red-500"
+                  >
+                    {error}
+                  </motion.p>
+                </AnimatePresence>
+              )}
               <CustomInputField
                 id="username"
                 icon={User}
@@ -62,8 +83,19 @@ function SignupPage() {
                 register={register("password")}
                 error={errors.password?.message}
               />
-              <Button type="submit" className="h-10 w-full">
-                Sign Up
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="h-10 w-full"
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <Spinner />
+                    Signing Up...
+                  </span>
+                ) : (
+                  "Sign Up"
+                )}
               </Button>
             </form>
             <div className="text-muted-foreground text-center text-sm">

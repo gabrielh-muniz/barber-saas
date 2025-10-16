@@ -7,11 +7,26 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Mail, Lock } from "lucide-react";
 import CustomInputField from "@/components/CustomInputField";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useLoginForm } from "@/hooks/useLogicForm";
+import useAuthStore from "@/store/auth";
+import { motion, AnimatePresence } from "motion/react";
 
 function LoginPage() {
+  const navigate = useNavigate();
+
+  const { signIn, isLoading, error } = useAuthStore();
+
+  const { register, handleSubmit, errors } = useLoginForm(async (data) => {
+    const [err, user] = await signIn(data.email, data.password);
+    if (!err && user) {
+      navigate("/dashboard");
+    }
+  });
+
   return (
     <CentralizedWrapper>
       <div className="w-full max-w-sm space-y-4">
@@ -28,13 +43,28 @@ function LoginPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Login Form */}
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              {error && (
+                <AnimatePresence>
+                  <motion.p
+                    initial={{ opacity: 0, y: -10, scale: 0 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-xs text-red-500"
+                  >
+                    {error}
+                  </motion.p>
+                </AnimatePresence>
+              )}
               <CustomInputField
                 id="email"
                 icon={Mail}
                 labelText="Email Address"
                 type="email"
                 placeholder="Email"
+                register={register("email")}
+                error={errors.email?.message}
               />
               <div className="space-y-1">
                 <CustomInputField
@@ -43,6 +73,8 @@ function LoginPage() {
                   labelText="Password"
                   type="password"
                   placeholder="Password"
+                  register={register("password")}
+                  error={errors.password?.message}
                 />
                 <div className="text-right">
                   <a
@@ -53,8 +85,19 @@ function LoginPage() {
                   </a>
                 </div>
               </div>
-              <Button type="submit" className="h-11 w-full">
-                Login
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="h-11 w-full"
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <Spinner />
+                    Signing In...
+                  </span>
+                ) : (
+                  "Sign In"
+                )}
               </Button>
 
               <div className="relative">
