@@ -4,6 +4,7 @@ import LoginPage from "@/pages/authentication/LoginPage";
 import RegisterPage from "./pages/authentication/SignupPage";
 import DashboardPage from "@/pages/DashboardPage";
 import ProtectedRoute from "@/components/ProtectedRoute.jsx";
+import UserAuthControl from "@/components/UserAuthControl.jsx";
 
 function App() {
   return (
@@ -11,7 +12,14 @@ function App() {
       <Routes>
         <Route path="/" element={<div>Home</div>} />
         <Route path="/auth/login" element={<LoginPage />} />
-        <Route path="/auth/signup" element={<RegisterPage />} />
+        <Route
+          path="/auth/signup"
+          element={
+            <UserAuthControl>
+              <RegisterPage />
+            </UserAuthControl>
+          }
+        />
         <Route
           path="/dashboard"
           element={

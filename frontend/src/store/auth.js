@@ -11,6 +11,7 @@ import {
 
 const defaultStates = {
   user: null,
+  isInitializing: true,
   isLoading: true,
   isAuthenticated: false,
   error: null,
@@ -29,6 +30,7 @@ const useAuthStore = create((set) => ({
   setUser: (user) =>
     set({
       user,
+      isInitializing: false,
       isLoading: false,
       isAuthenticated: !!user,
       error: null,
@@ -56,12 +58,12 @@ const useAuthStore = create((set) => ({
       return [error, null];
     }
 
-    set({
-      user: userCredential.user,
-      isLoading: false,
-      isAuthenticated: true,
-      error: null,
-    });
+    // set({
+    //   user: userCredential.user,
+    //   isLoading: false,
+    //   isAuthenticated: true,
+    //   error: null,
+    // });
     return [null, userCredential.user];
   },
 
