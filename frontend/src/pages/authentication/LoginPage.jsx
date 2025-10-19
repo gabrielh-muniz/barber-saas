@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from "motion/react";
 function LoginPage() {
   const navigate = useNavigate();
 
-  const { signIn, isLoading, error } = useAuthStore();
+  const { signIn, isLoading, error, signInWithGoogle } = useAuthStore();
 
   const { register, handleSubmit, errors } = useLoginForm(async (data) => {
     const [err, user] = await signIn(data.email, data.password);
@@ -26,6 +26,11 @@ function LoginPage() {
       navigate("/dashboard");
     }
   });
+
+  const handleGoogleSignIn = async () => {
+    const [err, user] = await signInWithGoogle();
+    if (!err && user) navigate("/dashboard");
+  };
 
   return (
     <CentralizedWrapper>
@@ -111,7 +116,12 @@ function LoginPage() {
                 </div>
               </div>
 
-              <Button variant="outline" className="h-11 w-full">
+              <Button
+                variant="outline"
+                className="h-11 w-full"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+              >
                 <Mail /> Continue with Google
               </Button>
             </form>

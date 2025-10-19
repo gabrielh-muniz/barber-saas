@@ -11,7 +11,14 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<div>Home</div>} />
-        <Route path="/auth/login" element={<LoginPage />} />
+        <Route
+          path="/auth/login"
+          element={
+            <UserAuthControl>
+              <LoginPage />
+            </UserAuthControl>
+          }
+        />
         <Route
           path="/auth/signup"
           element={

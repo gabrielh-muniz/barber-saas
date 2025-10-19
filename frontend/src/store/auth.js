@@ -7,6 +7,8 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 
 const defaultStates = {
@@ -58,12 +60,26 @@ const useAuthStore = create((set) => ({
       return [error, null];
     }
 
-    // set({
-    //   user: userCredential.user,
-    //   isLoading: false,
-    //   isAuthenticated: true,
-    //   error: null,
-    // });
+    // Let onAuthStateChanged listener update the user state
+    set({ isLoading: false });
+    return [null, userCredential.user];
+  },
+
+  /**
+   * Sign in with Google (popup)
+   * @returns {Promise<[Error|null, Object|null]>} [error, user] tuple
+   */
+  signInWithGoogle: async () => {
+    set({ isLoading: true, error: null });
+    const provider = new GoogleAuthProvider();
+    const [error, userCredential] = await to(signInWithPopup(auth, provider));
+    if (error) {
+      set({ isLoading: false, error: error.message || "Failed to sign in" });
+      return [error, null];
+    }
+
+    // onAuthStateChanged listener update the user state
+    set({ isLoading: false });
     return [null, userCredential.user];
   },
 
@@ -80,7 +96,6 @@ const useAuthStore = create((set) => ({
       return [error, null];
     }
 
-    set({ ...defaultStates, isLoading: false });
     return [null, true];
   },
 
@@ -117,12 +132,7 @@ const useAuthStore = create((set) => ({
       }
     }
 
-    set({
-      user: userCredential.user,
-      isLoading: false,
-      isAuthenticated: true,
-      error: null,
-    });
+    set({ isLoading: false });
     return [null, userCredential.user];
   },
 }));
