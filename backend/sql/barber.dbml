@@ -1,0 +1,200 @@
+Project "Barbearia Management System" {
+database_type: 'PostgreSQL'
+Note: 'Sistema de gerenciamento para barbearia, incluindo agendamentos, fila de espera, pagamentos e integração com WhatsApp.'
+}
+
+// Enums
+enum user_role {
+barber [note: 'Papel de barbeiro/dono']
+client [note: 'Papel de cliente']
+}
+
+enum day_of_week {
+sunday [note: 'Domingo']
+monday [note: 'Segunda-feira']
+tuesday [note: 'Terça-feira']
+wednesday [note: 'Quarta-feira']
+thursday [note: 'Quinta-feira']
+friday [note: 'Sexta-feira']
+saturday [note: 'Sábado']
+}
+
+enum appointment_status {
+pending [note: 'Agendamento pendente de confirmação']
+confirmed [note: 'Agendamento confirmado']
+completed [note: 'Agendamento concluído']
+cancelled [note: 'Agendamento cancelado']
+no_show [note: 'Cliente não compareceu']
+}
+
+enum payment_method {
+credit_card [note: 'Cartão de crédito']
+debit_card [note: 'Cartão de débito']
+cash [note: 'Dinheiro em espécie']
+pix [note: 'Pagamento via Pix']
+payment_link [note: 'Link de pagamento online']
+}
+
+enum payment_status {
+pending [note: 'Pagamento pendente']
+paid [note: 'Pagamento realizado']
+failed [note: 'Pagamento falhou']
+refunded [note: 'Pagamento estornado']
+}
+
+enum queue_entry_status {
+waiting [note: 'Cliente aguardando na fila']
+in_service [note: 'Cliente sendo atendido']
+completed [note: 'Atendimento concluído']
+removed [note: 'Cliente removido da fila']
+}
+
+enum whatsapp_message_type {
+inbound [note: 'Mensagem recebida do cliente']
+outbound [note: 'Mensagem enviada ao cliente']
+}
+
+enum whatsapp_interaction_type {
+query [note: 'Consulta de informações']
+booking [note: 'Agendamento de serviço']
+cancellation [note: 'Cancelamento de agendamento']
+status_update [note: 'Atualização de status da fila/agendamento']
+payment_link_sent [note: 'Envio de link de pagamento']
+}
+
+// Tables
+Table users {
+id integer [pk, increment]
+name varchar(255) [not null]
+phone_number varchar(20) [unique, not null, note: 'Número de telefone para contato e integração WhatsApp']
+email varchar(255) [unique, null, note: 'Endereço de e-mail para acesso web']
+password_hash varchar(255) [null, note: 'Hash da senha para login web']
+role user_role [not null, note: 'Papel do usuário no sistema (barbeiro ou cliente)']
+created_at timestamp [default: `now()`]
+updated_at timestamp [default: `now()`]
+
+indexes {
+phone_number [unique]
+email [unique]
+}
+Note: 'Armazena informações de usuários do sistema, incluindo barbeiros e clientes.'
+}
+
+Table services {
+id integer [pk, increment]
+name varchar(100) [unique, not null, note: 'Nome do serviço (ex: Corte de Cabelo, Barba)']
+description text [null, note: 'Descrição detalhada do serviço']
+price decimal(10, 2) [not null, note: 'Preço do serviço']
+duration_minutes integer [not null, note: 'Tempo médio de duração do serviço em minutos']
+is_active boolean [not null, default: true, note: 'Indica se o serviço está ativo e disponível']
+created_at timestamp [default: `now()`]
+updated_at timestamp [default: `now()`]
+
+indexes {
+name [unique]
+}
+Note: 'Define os tipos de serviços oferecidos pela barbearia.'
+}
+
+Table operating_hours {
+id integer [pk, increment]
+barber_id integer [not null, ref: > users.id, note: 'ID do barbeiro a quem se refere o horário de funcionamento']
+day_of_week day_of_week [not null, note: 'Dia da semana para o qual o horário se aplica']
+start_time time [not null, note: 'Hora de início do expediente']
+end_time time [not null, note: 'Hora de término do expediente']
+break_start_time time [null, note: 'Hora de início do intervalo (ex: almoço)']
+break_end_time time [null, note: 'Hora de término do intervalo']
+created_at timestamp [default: `now()`]
+updated_at timestamp [default: `now()`]
+
+indexes {
+(barber_id, day_of_week) [unique, note: 'Garante que cada barbeiro tenha apenas um horário por dia da semana']
+}
+Note: 'Define os horários de funcionamento da barbearia por dia da semana para cada barbeiro.'
+}
+
+Table appointments {
+id integer [pk, increment]
+client_id integer [not null, ref: > users.id, note: 'ID do cliente que fez o agendamento']
+barber_id integer [not null, ref: > users.id, note: 'ID do barbeiro que realizará o serviço']
+service_id integer [not null, ref: > services.id, note: 'ID do serviço agendado']
+appointment_date date [not null, note: 'Data do agendamento']
+start_time time [not null, note: 'Hora de início do agendamento']
+end_time time [not null, note: 'Hora de término prevista do agendamento']
+status appointment_status [not null, default: 'pending', note: 'Status atual do agendamento']
+is_walk_in boolean [not null, default: false, note: 'Indica se o agendamento foi um encaixe (cliente sem reserva)']
+notes text [null, note: 'Observações adicionais sobre o agendamento']
+created_at timestamp [default: `now()`]
+updated_at timestamp [default: `now()`]
+
+indexes {
+client_id
+barber_id
+(appointment_date, start_time)
+status
+}
+Note: 'Registra os agendamentos de serviços, incluindo clientes, barbeiros e status.'
+}
+
+Table payments {
+id integer [pk, increment]
+appointment_id integer [unique, null, ref: - appointments.id, note: 'ID do agendamento relacionado ao pagamento (se houver)']
+client_id integer [not null, ref: > users.id, note: 'ID do cliente que realizou o pagamento']
+amount decimal(10, 2) [not null, note: 'Valor total do pagamento']
+payment_method payment_method [not null, note: 'Método utilizado para o pagamento']
+transaction_id varchar(255) [unique, null, note: 'ID da transação gerado pelo gateway de pagamento']
+status payment_status [not null, default: 'pending', note: 'Status atual do pagamento']
+payment_date timestamp [null, note: 'Data e hora em que o pagamento foi efetivado']
+created_at timestamp [default: `now()`]
+updated_at timestamp [default: `now()`]
+
+indexes {
+appointment_id [unique]
+client_id
+status
+payment_date
+}
+Note: 'Registra todas as transações de pagamento, permitindo controle financeiro.'
+}
+
+Table waiting_queue {
+id integer [pk, increment]
+client_id integer [not null, ref: > users.id, note: 'ID do cliente na fila de espera']
+barber_id integer [not null, ref: > users.id, note: 'ID do barbeiro para o qual o cliente está aguardando']
+service_id integer [null, ref: > services.id, note: 'ID do serviço desejado pelo cliente (pode ser nulo se ainda não definido)']
+queue_position integer [not null, note: 'Posição atual do cliente na fila']
+status queue_entry_status [not null, default: 'waiting', note: 'Status do cliente na fila (aguardando, em serviço, etc.)']
+entry_time timestamp [not null, default: `now()`, note: 'Data e hora de entrada do cliente na fila']
+estimated_service_start_time timestamp [null, note: 'Hora estimada para o início do atendimento']
+actual_service_start_time timestamp [null, note: 'Hora real de início do atendimento']
+actual_service_end_time timestamp [null, note: 'Hora real de término do atendimento']
+created_at timestamp [default: `now()`]
+updated_at timestamp [default: `now()`]
+
+indexes {
+barber_id
+(barber_id, queue_position) [unique]
+status
+entry_time
+}
+Note: 'Gerencia a fila dinâmica de clientes, incluindo encaixes e status em tempo real.'
+}
+
+Table whatsapp_interactions {
+id integer [pk, increment]
+client_id integer [not null, ref: > users.id, note: 'ID do cliente envolvido na interação']
+message_type whatsapp_message_type [not null, note: 'Tipo da mensagem (entrada ou saída)']
+message_content text [not null, note: 'Conteúdo da mensagem de WhatsApp']
+interaction_type whatsapp_interaction_type [not null, note: 'Tipo de interação (consulta, agendamento, etc.)']
+related_appointment_id integer [null, ref: > appointments.id, note: 'ID do agendamento relacionado à interação (se houver)']
+timestamp timestamp [not null, default: `now()`, note: 'Data e hora da interação']
+created_at timestamp [default: `now()`]
+updated_at timestamp [default: `now()`]
+
+indexes {
+client_id
+related_appointment_id
+timestamp
+}
+Note: 'Armazena o histórico de todas as interações via WhatsApp com os clientes.'
+}
