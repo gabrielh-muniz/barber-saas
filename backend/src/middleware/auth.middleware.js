@@ -34,3 +34,5 @@ async function verifyToken(req, res, next) {
   req.user = decodedToken;
   next();
 }
+
+export { verifyToken };
