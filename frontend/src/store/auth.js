@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { auth } from "@/lib/firebase";
-import { to } from "@/lib/errorHandler";
+import { to } from "@/lib/to";
 import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
@@ -18,6 +18,7 @@ const defaultStates = {
   isAuthenticated: false,
   error: null,
 };
+import { fetchWithAuth } from "@/api/fetch";
 
 /**
  * Zustand store for authentication state management
@@ -130,6 +131,26 @@ const useAuthStore = create((set) => ({
         });
         return [updateError, null];
       }
+    }
+
+    // Create user in backend database
+    const [backendError, _] = await to(
+      fetchWithAuth("auth/signup", {
+        method: "POST",
+        body: JSON.stringify({
+          uid: userCredential.user.uid,
+          email: userCredential.user.email,
+          name: displayName || "",
+        }),
+      }),
+    );
+
+    if (backendError) {
+      set({
+        isLoading: false,
+        error: backendError.message || "Failed to create user in database",
+      });
+      return [backendError, null];
     }
 
     set({ isLoading: false });

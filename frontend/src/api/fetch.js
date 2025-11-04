@@ -1,4 +1,4 @@
-import { auth } from "../lib/firebase.lib.js";
+import { auth } from "@/lib/firebase";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
